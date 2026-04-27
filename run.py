@@ -1,13 +1,13 @@
 import asyncio
 import logging
 from aiogram import Bot, Dispatcher
-from config import config
+from config import BOT_TOKEN    
 from handlers import user_handlers
 from database.models import init_db
 
 async def main():
     await init_db()
-    bot = Bot(token=config.bot_token.get_secret_value())
+    bot = Bot(token=BOT_TOKEN)
     dp = Dispatcher()
     dp.include_router(user_handlers.router)
     
