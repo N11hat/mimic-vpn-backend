@@ -115,7 +115,7 @@ top_up_presets_kb = InlineKeyboardMarkup(
 android_setup_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         # В кнопках-ссылках мы используем url="..." вместо callback_data="..."
-        [InlineKeyboardButton(text="Шаг 1: Скачать приложение", url="https://clck.ru/3TP3Xe")], 
+        [InlineKeyboardButton(text="Шаг 1: Скачать приложение", url="https://play.google.com/store/apps/details?id=com.happproxy")], 
         [InlineKeyboardButton(text="Шаг 2: Подключиться", url="https://t.me/твоя_ссылка_на_подключение")], 
         [InlineKeyboardButton(text="🆘 Поддержка", url="https://t.me/RumbushVPN")],
         [InlineKeyboardButton(text="↩️ Выбор устройства", callback_data="connect")]
@@ -124,7 +124,7 @@ android_setup_kb = InlineKeyboardMarkup(
 # --- 8. Инструкция для iOS ---
 ios_setup_kb = InlineKeyboardMarkup(
     inline_keyboard=[
-        [InlineKeyboardButton(text="Шаг 1: Скачать приложение", url="https://apps.apple.com/app/id6504287215")], 
+        [InlineKeyboardButton(text="Шаг 1: Скачать приложение", url="https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973")], 
         [InlineKeyboardButton(text="Шаг 2: Подключиться", url="https://t.me/твоя_ссылка_на_подключение")], 
         [InlineKeyboardButton(text="🆘 Поддержка", url="https://t.me/RumbushVPN")],
         [InlineKeyboardButton(text="↩️ Выбор устройства", callback_data="connect")]
@@ -142,7 +142,7 @@ win10_setup_kb = InlineKeyboardMarkup(
 # --- 10. Инструкция для MacOS ---
 macos_setup_kb = InlineKeyboardMarkup(
     inline_keyboard=[
-        [InlineKeyboardButton(text="Шаг 1: Скачать приложение", url="https://clck.ru/3TP7i2")], 
+        [InlineKeyboardButton(text="Шаг 1: Скачать приложение", url="https://apps.apple.com/ru/app/happ-proxy-utility-plus/id6746188973")], 
         [InlineKeyboardButton(text="Шаг 2: Подключиться", url="https://t.me/твоя_ссылка_на_подключение")], 
         [InlineKeyboardButton(text="🆘 Поддержка", url="https://t.me/RumbushVPN")],
         [InlineKeyboardButton(text="↩️ Выбор устройства", callback_data="connect")]
