@@ -4,6 +4,7 @@ from aiogram.filters import CommandStart, CommandObject
 from keyboards import main_menu_kb, cabinet_kb, connect_kb, sub_balance_kb, tariffs_kb, top_up_kb, top_up_presets_kb, android_setup_kb, ios_setup_kb, win10_setup_kb, macos_setup_kb, win7_setup_kb, linux_setup_kb, huawei_setup_kb, android_tv_setup_kb, apple_tv_setup_kb
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from database.requests import get_or_create_user, get_balance, get_discount, apply_promocode, count_referrals
 
 class PromoState(StatesGroup):
     waiting_for_promo = State()
@@ -13,28 +14,31 @@ router = Router()
 
 @router.message(CommandStart())
 async def cmd_start(message: types.Message, command: CommandObject):
-    # Проверяем, есть ли в ссылке аргумент (например, ?start=ref_12345)
-    args = command.args
+    # Парсим реферера из ссылки ?start=ref_12345
     referrer_id = None
-    
+    args = command.args
     if args and args.startswith("ref_"):
         try:
-            # Достаем ID пригласившего
             referrer_id = int(args.split("_")[1])
-        except ValueError:
+        except (ValueError, IndexError):
             pass
-            
-    # Здесь в будущем будет код добавления юзера в базу данных:
-    # if юзер_новый:
-    #     создать_в_базе(tg_id=message.from_user.id, referrer_id=referrer_id)
+
+    # Регистрируем (или находим) юзера в БД
+    user, is_new = await get_or_create_user(
+        tg_id=message.from_user.id,
+        username=message.from_user.username,
+        referrer_id=referrer_id,
+    )
 
     # Приветствие
     text = (
         "👋 Добро пожаловать в <b>Rumbush VPN</b>!\n\n"
         "Безопасный и быстрый интернет без границ."
     )
-    if referrer_id and referrer_id != message.from_user.id:
-        text += "\n🎁 <i>Вы приглашены пользователем нашей сети!</i>"
+
+    # Бонус приветствия по реферальной ссылке (только новым юзерам)
+    if is_new and user.referrer_id:
+        text += "\n\n🎁 <i>Вы приглашены пользователем нашей сети!</i>"
 
     await message.answer(text, reply_markup=main_menu_kb, parse_mode="HTML")
 
