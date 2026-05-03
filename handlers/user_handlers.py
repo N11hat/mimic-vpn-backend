@@ -71,9 +71,7 @@ async def open_sub_balance(callback: types.CallbackQuery):
 @router.callback_query(F.data == "buy_sub")
 async def open_tariffs(callback: types.CallbackQuery, state: FSMContext):
     # Достаем данные пользователя из памяти (есть ли там скидка)
-    user_data = await state.get_data()
-    discount = user_data.get("discount", 0) # По умолчанию скидка 0
-    
+    discount = await get_discount(callback.from_user.id)
     # Базовые цены
     p_7d, p_1m, p_3m, p_6m = 99, 250, 750, 1250
     
@@ -124,30 +122,26 @@ async def enter_promo_code(callback: types.CallbackQuery, state: FSMContext):
 # --- 2. Ловим текст промокода ---
 @router.message(PromoState.waiting_for_promo)
 async def process_promo_code(message: types.Message, state: FSMContext):
-    # Убираем лишние пробелы и делаем заглавными (чтобы работало и new, и NEW)
-    code = message.text.strip().upper() 
+    code = message.text.strip().upper()
+    discount = await apply_promocode(message.from_user.id, code)
 
-    if code == "NEW":
-        # Сохраняем скидку в память бота для этого пользователя
-        await state.update_data(discount=10) 
-        
+    if discount is not None:
         await message.answer(
-            "✅ <b>Промокод успешно активирован!</b>\n\n"
-            "Вы получили скидку <b>10%</b> на все тарифы. Перейдите к покупке подписки.",
+            f"✅ <b>Промокод успешно активирован!</b>\n\n"
+            f"Вы получили скидку <b>{discount}%</b> на все тарифы. Перейдите к покупке подписки.",
             reply_markup=cabinet_kb,
-            parse_mode="HTML"
+            parse_mode="HTML",
         )
     else:
         await message.answer(
-            "❌ <b>Промокод не найден или истек.</b>\n\n"
+            "❌ <b>Промокод не найден, истёк или уже использован.</b>\n\n"
             "Проверьте правильность ввода или вернитесь в кабинет.",
             reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="⬅️ Вернуться в кабинет", callback_data="cabinet")]
+                [InlineKeyboardButton(text="↩️ Вернуться в кабинет", callback_data="cabinet")]
             ]),
-            parse_mode="HTML"
+            parse_mode="HTML",
         )
-    
-    # Выключаем режим ожидания текста, но сохраняем саму скидку в памяти!
+
     await state.set_state(None)
 
 @router.callback_query(F.data == "partner") # Укажи тут свой callback_data от кнопки партнёрки
@@ -162,13 +156,15 @@ async def open_partner_program(callback: types.CallbackQuery):
     # Формируем персональную ссылку
     ref_link = f"https://t.me/{bot_username}?start=ref_{user_id}"
     
-    # Пока баланс 0, так как базу еще не подключили к интерфейсу
-    partner_balance = 0 
+    
+    partner_balance = await get_balance(user_id)
+    referrals_count = await count_referrals(user_id)
     
     text = (
         "🤝 <b>Партнёрская программа</b>\n\n"
         "Приглашайте друзей и зарабатывайте <b>20%</b> с каждой их покупки на свой баланс!\n\n"
         f"Ваш текущий баланс: <b>{partner_balance}₽</b>\n\n"
+	f"👥 Приглашено друзей: <b>{referrals_count}</b>\n\n"
         "🔗 <b>Ваша персональная ссылка:</b>\n"
         f"<code>{ref_link}</code>\n\n"
         "<i>(Нажмите на ссылку, чтобы скопировать)</i>"
@@ -188,7 +184,7 @@ async def open_top_up_menu(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
     await state.set_state(None) # Сбрасываем состояния, если они были
     
-    balance = 0 # В будущем будем брать из базы данных
+    balance = await get_balance(callback.from_user.id)
     
     text = (
         "📈 <b>Пополнение личного счёта</b>\n\n"
@@ -207,7 +203,8 @@ async def open_top_up_menu(callback: types.CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "custom_amount")
 async def enter_custom_amount(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
-    balance = 0
+    balance = await get_balance(callback.from_user.id)
+
     
     text = (
         f"⭐️ Текущий баланс: <b>{balance}₽</b>\n\n"
