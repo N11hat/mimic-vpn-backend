@@ -52,7 +52,7 @@ sub_balance_kb = InlineKeyboardMarkup(
         [InlineKeyboardButton(text="💳 Приобрести подписку", callback_data="buy_sub")],
         [InlineKeyboardButton(text="💰 Пополнить баланс", callback_data="top_up_balance")],
         # Мы используем callback_data="cabinet", так как у нас уже есть функция, которая его обрабатывает!
-        [InlineKeyboardButton(text="⬅️ Вернуться в кабинет", callback_data="cabinet")] 
+        [InlineKeyboardButton(text="↩️ Вернуться назад", callback_data="cabinet")] 
     ]
 )
 # --- 5. Выбор тарифа подписки ---
