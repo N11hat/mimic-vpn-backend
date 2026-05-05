@@ -1,8 +1,7 @@
 from datetime import datetime
 from sqlalchemy import select, update
 
-from database.models import async_session, User
-
+from database.models import async_session, User, Promocode, UserPromocode
 
 async def get_or_create_user(tg_id: int, username: str | None = None, referrer_id: int | None = None) -> tuple[User, bool]:
     """
@@ -65,26 +64,55 @@ async def update_balance(tg_id: int, amount: int) -> None:
 
 async def apply_promocode(tg_id: int, code: str) -> int | None:
     """
-    Применяет промокод. Возвращает процент скидки или None, если код невалидный/уже использован.
-    Пока что хардкод одного промокода NEW = 10%. Потом перенесём в отдельную таблицу.
+    Применяет промокод. Возвращает процент скидки или None при ошибке.
+    Проверки: код существует, активен, не истёк, не превышен лимит,
+    юзер ещё не применял этот код.
     """
-    PROMOCODES = {"NEW": 10}
-
-    discount = PROMOCODES.get(code.strip().upper())
-    if discount is None:
-        return None
+    code = code.strip().upper()
 
     async with async_session() as session:
-        result = await session.execute(select(User).where(User.tg_id == tg_id))
-        user = result.scalar_one_or_none()
-        if not user or user.promo_used:
+        # Ищем промокод
+        promo_result = await session.execute(
+            select(Promocode).where(Promocode.code == code)
+        )
+        promo = promo_result.scalar_one_or_none()
+
+        if not promo or not promo.is_active:
+            return None
+
+        # Проверка срока действия
+        if promo.expires_at and promo.expires_at < datetime.utcnow():
+            return None
+
+        # Проверка лимита
+        if promo.max_uses > 0 and promo.used_count >= promo.max_uses:
+            return None
+
+        # Проверка: этот юзер уже применял этот промокод?
+        history_result = await session.execute(
+            select(UserPromocode).where(
+                UserPromocode.user_tg_id == tg_id,
+                UserPromocode.promocode_id == promo.id,
+            )
+        )
+        if history_result.scalar_one_or_none():
+            return None
+
+        # Получаем юзера и применяем скидку
+        user_result = await session.execute(select(User).where(User.tg_id == tg_id))
+        user = user_result.scalar_one_or_none()
+        if not user:
             return None
 
         user.promo_used = True
-        user.discount = discount
-        await session.commit()
-        return discount
+        user.discount = promo.discount
 
+        # Записываем в историю и увеличиваем счётчик
+        session.add(UserPromocode(user_tg_id=tg_id, promocode_id=promo.id))
+        promo.used_count += 1
+
+        await session.commit()
+        return promo.discount
 
 async def get_discount(tg_id: int) -> int:
     user = await get_user(tg_id)
@@ -99,3 +127,63 @@ async def count_referrals(tg_id: int) -> int:
             select(func.count()).select_from(User).where(User.referrer_id == tg_id)
         )
         return result.scalar() or 0
+
+
+
+
+async def create_promocode(
+    code: str,
+    discount: int,
+    max_uses: int = 0,
+    expires_at: datetime | None = None,
+    created_by: int | None = None,
+) -> Promocode | None:
+    """
+    Создаёт новый промокод. Возвращает объект Promocode или None,
+    если код с таким именем уже существует.
+    """
+    code = code.strip().upper()
+
+    async with async_session() as session:
+        # Проверка уникальности
+        existing = await session.execute(select(Promocode).where(Promocode.code == code))
+        if existing.scalar_one_or_none():
+            return None
+
+        promo = Promocode(
+            code=code,
+            discount=discount,
+            max_uses=max_uses,
+            expires_at=expires_at,
+            created_by=created_by,
+        )
+        session.add(promo)
+        await session.commit()
+        await session.refresh(promo)
+        return promo
+
+
+async def get_all_promocodes(only_active: bool = True) -> list[Promocode]:
+    """Возвращает список всех промокодов."""
+    async with async_session() as session:
+        query = select(Promocode).order_by(Promocode.created_at.desc())
+        if only_active:
+            query = query.where(Promocode.is_active == True)
+        result = await session.execute(query)
+        return list(result.scalars().all())
+
+
+async def deactivate_promocode(code: str) -> bool:
+    """Деактивирует промокод. Возвращает True, если успех, False — если код не найден."""
+    code = code.strip().upper()
+
+    async with async_session() as session:
+        result = await session.execute(select(Promocode).where(Promocode.code == code))
+        promo = result.scalar_one_or_none()
+
+        if not promo:
+            return False
+
+        promo.is_active = False
+        await session.commit()
+        return True
