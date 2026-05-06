@@ -5,6 +5,7 @@ from keyboards import main_menu_kb, cabinet_kb, connect_kb, sub_balance_kb, tari
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from database.requests import get_or_create_user, get_balance, get_discount, apply_promocode, count_referrals
+from aiogram.types import FSInputFile
 
 class PromoState(StatesGroup):
     waiting_for_promo = State()
@@ -45,7 +46,31 @@ async def cmd_start(message: types.Message, command: CommandObject):
 # Обработка нажатия на "Личный кабинет"
 @router.callback_query(F.data == "cabinet")
 async def open_cabinet(callback: types.CallbackQuery):
-    await callback.message.edit_text(" <b>Личный кабинет</b>\n\nТут будет твой баланс и статус.", reply_markup=cabinet_kb, parse_mode="HTML")
+    # Указываем путь к картинке. 
+    # Убедись, что папка images лежит в корне твоего проекта
+    # и картинка называется точно так же: cabinet_banner.jpg (или .png)
+    photo = FSInputFile("images/cabinet_banner.jpg")
+    
+    # Текст, который будет под картинкой
+    text = (
+        "<b>Личный кабинет</b>\n\n"
+        "Тут будет твой баланс и статус."
+    )
+    
+    # Так как мы не можем просто "изменить текст" на "картинку с текстом" в одном сообщении,
+    # мы удаляем старое сообщение с текстом...
+    await callback.message.delete()
+    
+    # ...и отправляем новое сообщение уже с фоткой и нашей клавиатурой!
+    await callback.message.answer_photo(
+        photo=photo,
+        caption=text,
+        reply_markup=cabinet_kb,
+        parse_mode="HTML"
+    )
+    
+    # Закрываем всплывающее уведомление-часики на кнопке
+    await callback.answer()
 
 # Обработка нажатия на "Подключиться"
 @router.callback_query(F.data == "connect")
