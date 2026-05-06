@@ -6,6 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from database.requests import get_or_create_user, get_balance, get_discount, apply_promocode, count_referrals
 from aiogram.types import FSInputFile
+from utils.messages import safe_edit
 
 class PromoState(StatesGroup):
     waiting_for_promo = State()
@@ -75,17 +76,17 @@ async def open_cabinet(callback: types.CallbackQuery):
 # Обработка нажатия на "Подключиться"
 @router.callback_query(F.data == "connect")
 async def open_connect(callback: types.CallbackQuery):
-    await callback.message.edit_text(" <b>Выберите ваше устройство:</b>", reply_markup=connect_kb, parse_mode="HTML")
+    await safe_edit(callback, " <b>Выберите ваше устройство:</b>", reply_markup=connect_kb, parse_mode="HTML")
 
 # Кнопка "Назад"
 @router.callback_query(F.data == "back_to_main")
 async def back_to_main(callback: types.CallbackQuery):
-    await callback.message.edit_text(" Главное меню:", reply_markup=main_menu_kb)
+    await safe_edit(callback, " Главное меню:", reply_markup=main_menu_kb)
 
 # Обработка нажатия на "Подписка и баланс"
 @router.callback_query(F.data == "sub_balance")
 async def open_sub_balance(callback: types.CallbackQuery):
-    await callback.message.edit_text(
+    await safe_edit(callback,
         "💳 <b>Управление подпиской и балансом</b>\n\n"
         "Здесь вы можете пополнить внутренний счет или выбрать подходящий тарифный план.",
         reply_markup=sub_balance_kb,
@@ -122,7 +123,7 @@ async def open_tariffs(callback: types.CallbackQuery, state: FSMContext):
         "🔒 <i>Выберите подходящий срок подписки и защитите свои данные уже сегодня!</i>"
     )
     
-    await callback.message.edit_text(
+    await safe_edit(callback,
         text=text,
         reply_markup=tariffs_kb,
         parse_mode="HTML"
@@ -132,16 +133,15 @@ async def open_tariffs(callback: types.CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "promo")
 async def enter_promo_code(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer() # <--- ДОБАВИТЬ СЮДА
-    await callback.message.edit_text(
+    await safe_edit(
+        callback,
         "🎁 <b>Активация промокода</b>\n\n"
         "Отправьте ваш промокод ответным сообщением:",
-        # Добавляем кнопку отмены, чтобы человек мог выйти, если передумал
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="⬅️ Отмена", callback_data="cabinet")]
+            [InlineKeyboardButton(text="↩️ Отмена", callback_data="cabinet")]
         ]),
-        parse_mode="HTML"
     )
-    # Переводим бота в режим ожидания текста
+     # Переводим бота в режим ожидания текста
     await state.set_state(PromoState.waiting_for_promo)
 
 # --- 2. Ловим текст промокода ---
@@ -195,14 +195,15 @@ async def open_partner_program(callback: types.CallbackQuery):
         "<i>(Нажмите на ссылку, чтобы скопировать)</i>"
     )
     
-    await callback.message.edit_text(
-        text, 
-        # Можешь добавить тут кнопку вывода средств или возврата в меню
+    await safe_edit(
+        callback,
+        text,
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="⬅️ Вернуться в кабинет", callback_data="cabinet")]
+            [InlineKeyboardButton(text="↩️ Вернуться в кабинет", callback_data="cabinet")]
         ]),
-        parse_mode="HTML"
     )
+
+
     # --- Пополнение баланса: Открытие главного меню ---
 @router.callback_query(F.data == "top_up_balance")
 async def open_top_up_menu(callback: types.CallbackQuery, state: FSMContext):
@@ -222,7 +223,7 @@ async def open_top_up_menu(callback: types.CallbackQuery, state: FSMContext):
         "👇 <i>Выберите сумму для пополнения баланса</i>"
     )
     
-    await callback.message.edit_text(text, reply_markup=top_up_kb, parse_mode="HTML")
+    await safe_edit(callback, text, reply_markup=top_up_kb, parse_mode="HTML")
 
 # --- Пополнение баланса: Нажатие на "Ввести сумму" ---
 @router.callback_query(F.data == "custom_amount")
@@ -238,7 +239,7 @@ async def enter_custom_amount(callback: types.CallbackQuery, state: FSMContext):
         "число в чат (например: 500)</i>"
     )
     
-    await callback.message.edit_text(text, reply_markup=top_up_presets_kb, parse_mode="HTML")
+    await safe_edit(callback, text, reply_markup=top_up_presets_kb, parse_mode="HTML")
     # Включаем режим ожидания ввода суммы
     await state.set_state(TopUpState.waiting_for_amount)
 
@@ -278,7 +279,7 @@ async def process_preset_amount(callback: types.CallbackQuery, state: FSMContext
     # Достаем цифру из названия кнопки (например из "pay_500" достаем "500")
     amount = int(callback.data.split("_")[1])
     
-    await callback.message.edit_text(
+    await safe_edit(callback,
         f"✅ <b>Отлично!</b> Вы выбрали пополнение на <b>{amount}₽</b>.\n\n"
         "<i>(Дальше здесь появится ссылка на платежную систему)</i>",
         reply_markup=InlineKeyboardMarkup(inline_keyboard=[
@@ -302,7 +303,7 @@ async def instruction_android(callback: types.CallbackQuery):
         "4️⃣ Выберите нужную локацию и включите VPN\n\n"
     )
     
-    await callback.message.edit_text(
+    await safe_edit(callback,
         text=text,
         reply_markup=android_setup_kb,
         parse_mode="HTML",
@@ -325,7 +326,7 @@ async def instruction_ios(callback: types.CallbackQuery):
         "4️⃣ Выберите нужную локацию и включите VPN"
     )
     
-    await callback.message.edit_text(
+    await safe_edit(callback,
         text=text,
         reply_markup=ios_setup_kb,
         parse_mode="HTML",
@@ -351,7 +352,7 @@ async def instruction_win10(callback: types.CallbackQuery):
         "<i>Если у вас старая версия Windows или возникают проблемы с работой программы, скачайте и установите <a href='https://aka.ms/vs/17/release/vc_redist.x86.exe'>Microsoft Visual C++ Redistributable</a> и <a href='https://dotnet.microsoft.com/'>Microsoft .NET 6.0 Desktop Runtime</a></i>\n\n"
     )
     
-    await callback.message.edit_text(
+    await safe_edit(callback,
         text=text,
         reply_markup=win10_setup_kb,
         parse_mode="HTML",
@@ -375,7 +376,7 @@ async def instruction_macos(callback: types.CallbackQuery):
         "4️⃣ Выберите нужную локацию и включите подключение\n\n"
     )
     
-    await callback.message.edit_text(
+    await safe_edit(callback,
         text=text,
         reply_markup=macos_setup_kb,
         parse_mode="HTML",
@@ -401,7 +402,7 @@ async def instruction_win7(callback: types.CallbackQuery):
         "<i>Если у вас старая версия Windows или возникают проблемы с работой программы, скачайте и установите <a href='https://aka.ms/vs/17/release/vc_redist.x86.exe'>Microsoft Visual C++ Redistributable</a> и <a href='https://dotnet.microsoft.com/'>Microsoft .NET 6.0 Desktop Runtime</a></i>\n\n"
     )
     
-    await callback.message.edit_text(
+    await safe_edit(callback,
         text=text,
         reply_markup=win7_setup_kb,
         parse_mode="HTML",
@@ -426,7 +427,7 @@ async def instruction_linux(callback: types.CallbackQuery):
         "6️⃣ Нажмите на большую кнопку включения и дождитесь подключения к серверам.\n\n"
     )
     
-    await callback.message.edit_text(
+    await safe_edit(callback,
         text=text,
         reply_markup=linux_setup_kb,
         parse_mode="HTML",
@@ -449,7 +450,7 @@ async def instruction_huawei(callback: types.CallbackQuery):
         "4️⃣ Выберите нужную локацию и включите VPN\n\n"
     )
     
-    await callback.message.edit_text(
+    await safe_edit(callback,
         text=text,
         reply_markup=huawei_setup_kb,
         parse_mode="HTML",
@@ -470,7 +471,7 @@ async def instruction_android_tv(callback: types.CallbackQuery):
         "6️⃣ Выберите нужную локацию и нажмите кнопку \"<b>подключение</b>\" и выдайте все необходимые разрешения\n\n"
     )
     
-    await callback.message.edit_text(
+    await safe_edit(callback,
         text=text,
         reply_markup=android_tv_setup_kb,
         parse_mode="HTML",
@@ -490,7 +491,7 @@ async def instruction_apple_tv(callback: types.CallbackQuery):
         "5️⃣ Если окно не закрылось автоматически после нажатия \"<b>Отправить</b>\", нажмите кнопку \"<b>пропустить</b>\" — должен будет открыться основной интерфейс\n\n"
         "6️⃣ Выберите нужную локацию и нажмите кнопку \"<b>подключение</b>\" и выдайте все необходимые разрешения\n\n"
     )
-    await callback.message.edit_text(
+    await safe_edit(callback,
         text=text,
         reply_markup=apple_tv_setup_kb,
         parse_mode="HTML",
