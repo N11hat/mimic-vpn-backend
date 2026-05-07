@@ -3,16 +3,12 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import CommandStart, CommandObject
 from keyboards import main_menu_kb, cabinet_kb, connect_kb, sub_balance_kb, tariffs_kb, top_up_kb, top_up_presets_kb, android_setup_kb, ios_setup_kb, win10_setup_kb, macos_setup_kb, win7_setup_kb, linux_setup_kb, huawei_setup_kb, android_tv_setup_kb, apple_tv_setup_kb
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
+from states import PromoState, TopUpState
 from database.requests import get_or_create_user, get_balance, get_discount, apply_promocode, count_referrals
 from aiogram.types import FSInputFile
 from utils.messages import safe_edit
 from config import TARIFFS, MIN_TOP_UP, MAX_TOP_UP, DEMO_VPN_KEY
 
-class PromoState(StatesGroup):
-    waiting_for_promo = State()
-class TopUpState(StatesGroup):
-    waiting_for_amount = State()
 router = Router()
 
 @router.message(CommandStart())
