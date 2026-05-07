@@ -2,40 +2,30 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-BOT_TOKEN = os.getenv("BOT_TOKEN")
 
+# === Telegram-бот ===
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMINS = [1424082929, 818638190]  # tg_id админов
 
-
-
-# === ТАРИФЫ (цены в рублях) ===
+# === Тарифы (цены в рублях) ===
+# Базовые цены на подписку. Если поменяешь — пересчитается везде, где они нужны.
 TARIFFS = {
-    "7d":  99,    # 7 дней
-    "1m":  250,   # 1 месяц
-    "3m":  750,   # 3 месяца
-    "6m":  1250,  # 6 месяцев
+    "7d": 99,    # 7 дней
+    "1m": 250,   # 1 месяц
+    "3m": 750,   # 3 месяца
+    "6m": 1250,  # 6 месяцев
 }
-
-
-# === VPN ===
-# Временный ключ для всех юзеров (пока нет Marzban)
-DEFAULT_VPN_KEY = "https://sub.g-link.cc/subkey/p2DzuS-QE99aLH9HWyHSeoTj4"
-
-
-# === Ссылки на скачивание HAPP ===
-HAPP_LINKS = {
-    "android":     "https://clck.ru/3TP3Xe",
-    "ios":         "https://apps.apple.com/",
-    "win10":       "https://clck.ru/3TP7C5",
-    "win7":        "https://clck.ru/3TPmJV",
-    "macos":       "https://clck.ru/3TP7i2",
-    "linux":       "https://clck.ru/3TPmVj",
-    "huawei":      "https://clck.ru/3TPmod",
-    "android_tv":  "https://clck.ru/3TPmod",  # та же что Huawei
-    "apple_tv":    "https://apps.apple.com/",
-}
-
 
 # === Лимиты пополнения баланса ===
-BALANCE_MIN = 50
-BALANCE_MAX = 15000
+MIN_TOP_UP = 50      # минимальная сумма пополнения, ₽
+MAX_TOP_UP = 15000   # максимальная сумма пополнения, ₽
+
+# === Партнёрская программа ===
+REFERRAL_PERCENT = 20  # сколько процентов получает реферер с покупок друга
+
+# === Ссылки и контакты ===
+SUPPORT_URL = "https://t.me/RumbushVPN"   # ссылка на поддержку и канал
+
+# === VPN (временные значения, потом возьмём из Marzban API) ===
+# Этот ключ показывается во всех инструкциях. Когда подключим Marzban — уберём.
+DEMO_VPN_KEY = "https://sub.g-link.cc/subkey/p2DzuS-QE99aLH9HWyHSeoTj4"

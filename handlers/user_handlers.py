@@ -7,7 +7,7 @@ from aiogram.fsm.state import State, StatesGroup
 from database.requests import get_or_create_user, get_balance, get_discount, apply_promocode, count_referrals
 from aiogram.types import FSInputFile
 from utils.messages import safe_edit
-from config import TARIFFS
+from config import TARIFFS, MIN_TOP_UP, MAX_TOP_UP, DEMO_VPN_KEY
 
 class PromoState(StatesGroup):
     waiting_for_promo = State()
@@ -222,7 +222,7 @@ async def open_top_up_menu(callback: types.CallbackQuery, state: FSMContext):
         "Ваши платежные данные остаются в безопасности.\n\n"
         "🎯 <b>Вы можете:</b>\n"
         "• Выбрать готовую сумму из списка ниже\n"
-        "• Ввести любую сумму от <b>50₽</b> до <b>15.000₽</b>\n\n"
+        f"• Ввести любую сумму от <b>{MIN_TOP_UP}₽</b> до <b>{MAX_TOP_UP}₽</b>\n\n"
         "👇 <i>Выберите сумму для пополнения баланса</i>"
     )
     
@@ -238,7 +238,7 @@ async def enter_custom_amount(callback: types.CallbackQuery, state: FSMContext):
     text = (
         f"⭐️ Текущий баланс: <b>{balance}₽</b>\n\n"
         "💰 <b>Введите сумму для пополнения Вашего баланса</b>\n\n"
-        "ℹ️ Доступный диапазон: <b>от 50₽ до 15.000₽</b>. <i>Просто отправьте "
+        f"ℹ️ <b>Доступный диапазон:</b> <b>от {MIN_TOP_UP}₽ до {MAX_TOP_UP}₽</b>. <i>Просто отправьте "
         "число в чат (например: 500)</i>"
     )
     
@@ -257,8 +257,11 @@ async def process_custom_amount(message: types.Message, state: FSMContext):
         return
         
     # Проверяем диапазон (как ты и просил: от 50 до 15 000)
-    if amount < 50 or amount > 15000:
-        await message.answer("❌ <b>Ошибка:</b> Сумма должна быть от 50₽ до 15.000₽. Попробуйте еще раз.", parse_mode="HTML")
+    if amount < MIN_TOP_UP or amount > MAX_TOP_UP:
+        await message.answer(
+            f"❌ <b>Ошибка:</b> Сумма должна быть от {MIN_TOP_UP}₽ до {MAX_TOP_UP}₽. Попробуйте еще раз.",
+            parse_mode="HTML"
+        )
         return
         
     # Если всё отлично, отключаем режим ожидания и переходим к оплате
@@ -295,7 +298,7 @@ async def instruction_android(callback: types.CallbackQuery):
     await callback.answer()
     
     # Временный ключ для примера (позже научим бота брать его из базы данных для каждого юзера свой)
-    vpn_key = "https://sub.g-link.cc/subkey/p2DzuS-QE99aLH9HWyHSeoTj4"
+    vpn_key = DEMO_VPN_KEY
     
     text = (
         "🤖 Настройка <b>Rumbush VPN</b> на Android через HAPP:\n\n"
@@ -318,7 +321,7 @@ async def instruction_ios(callback: types.CallbackQuery):
     await callback.answer() # Снимаем "часики" загрузки
     
     # Временный ключ (как и в Android)
-    vpn_key = "https://sub.g-link.cc/subkey/p2DzuS-QE99aLH9HWyHSeoTj4"
+    vpn_key = DEMO_VPN_KEY
     
     text = (
         "🍏 Настройка <b>Rumbush VPN</b> на iOS через HAPP\n\n"
@@ -340,8 +343,8 @@ async def instruction_ios(callback: types.CallbackQuery):
 async def instruction_win10(callback: types.CallbackQuery):
     await callback.answer() # Снимаем "часики" загрузки
     
-    # Временный ключ
-    vpn_key = "https://sub.g-link.cc/subkey/p2DzuS-QE99aLH9HWyHSeoTj4"
+    
+    vpn_key = DEMO_VPN_KEY
     
     text = (
         "💻 Настройка <b>Rumbush VPN</b> на Windows через HAPP:\n\n"
@@ -366,8 +369,8 @@ async def instruction_win10(callback: types.CallbackQuery):
 async def instruction_macos(callback: types.CallbackQuery):
     await callback.answer() # Снимаем "часики" загрузки
     
-    # Временный ключ
-    vpn_key = "https://sub.g-link.cc/subkey/p2DzuS-QE99aLH9HWyHSeoTj4"
+    vpn_key = DEMO_VPN_KEY
+
     
     text = (
         "💻 Настройка <b>Rumbush VPN</b> на MacOS через HAPP:\n"
@@ -390,8 +393,8 @@ async def instruction_macos(callback: types.CallbackQuery):
 async def instruction_win7(callback: types.CallbackQuery):
     await callback.answer() # Снимаем "часики"
     
-    # Временный ключ
-    vpn_key = "https://sub.g-link.cc/subkey/p2DzuS-QE99aLH9HWyHSeoTj4"
+    vpn_key = DEMO_VPN_KEY
+
     
     text = (
         "💻 Настройка <b>Rumbush VPN</b> на Windows 7 через HAPP:\n\n"
@@ -416,8 +419,8 @@ async def instruction_win7(callback: types.CallbackQuery):
 async def instruction_linux(callback: types.CallbackQuery):
     await callback.answer() # Снимаем "часики" загрузки
     
-    # Временный ключ
-    vpn_key = "https://sub.g-link.cc/subkey/p2DzuS-QE99aLH9HWyHSeoTj4"
+    vpn_key = DEMO_VPN_KEY
+
     
     text = (
         "🐧 Настройка <b>Rumbush VPN</b> на Linux через HAPP:\n\n"
@@ -441,8 +444,8 @@ async def instruction_linux(callback: types.CallbackQuery):
 async def instruction_huawei(callback: types.CallbackQuery):
     await callback.answer() # Снимаем "часики"
     
-    # Временный ключ
-    vpn_key = "https://sub.g-link.cc/subkey/p2DzuS-QE99aLH9HWyHSeoTj4"
+    vpn_key = DEMO_VPN_KEY
+
     
     text = (
         "📱 Настройка <b>Rumbush VPN</b> на HUAWEI через HAPP:\n\n"
