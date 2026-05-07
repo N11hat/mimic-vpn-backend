@@ -1,10 +1,9 @@
 from datetime import datetime
 from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncAttrs
 
-engine = create_async_engine('sqlite+aiosqlite:///vpn_database.db', echo=False)
-async_session = async_sessionmaker(engine, expire_on_commit=False)
+from database.engine import engine
 
 
 class Base(AsyncAttrs, DeclarativeBase):

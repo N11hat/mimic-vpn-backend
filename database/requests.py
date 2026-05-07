@@ -1,7 +1,8 @@
 from datetime import datetime
 from sqlalchemy import select, update
 
-from database.models import async_session, User, Promocode, UserPromocode
+from database.engine import async_session
+from database.models import User, Promocode, UserPromocode
 
 async def get_or_create_user(tg_id: int, username: str | None = None, referrer_id: int | None = None) -> tuple[User, bool]:
     """
