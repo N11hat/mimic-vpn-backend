@@ -7,6 +7,7 @@ from aiogram.fsm.state import State, StatesGroup
 from database.requests import get_or_create_user, get_balance, get_discount, apply_promocode, count_referrals
 from aiogram.types import FSInputFile
 from utils.messages import safe_edit
+from config import TARIFFS
 
 class PromoState(StatesGroup):
     waiting_for_promo = State()
@@ -99,8 +100,10 @@ async def open_tariffs(callback: types.CallbackQuery, state: FSMContext):
     # Достаем данные пользователя из памяти (есть ли там скидка)
     discount = await get_discount(callback.from_user.id)
     # Базовые цены
-    p_7d, p_1m, p_3m, p_6m = 99, 250, 750, 1250
-    
+    p_7d = TARIFFS["7d"]
+    p_1m = TARIFFS["1m"]
+    p_3m = TARIFFS["3m"]
+    p_6m = TARIFFS["6m"]    
     # Если есть скидка, пересчитываем
     if discount > 0:
         p_7d = int(p_7d * (1 - discount / 100))
