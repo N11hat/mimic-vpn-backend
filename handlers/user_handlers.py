@@ -289,213 +289,187 @@ async def process_preset_amount(callback: types.CallbackQuery, state: FSMContext
         ]),
         parse_mode="HTML"
     )# Обработка выбора устройства "Android"
-@router.callback_query(F.data == "os_android")
-async def instruction_android(callback: types.CallbackQuery):
+# Словарь: callback_data -> (текст инструкции, клавиатура)
+# Чтобы добавить новое устройство — просто добавь строку в словарь.
+INSTRUCTION_DATA = {
+    "os_android": (
+        (
+            "📱 Настройка <b>Rumbush VPN</b> на Android через HAPP:\n\n"
+            "1️⃣ Откройте <a href='https://play.google.com/store'>Google Play Маркет</a>"
+            " или скачайте APK у нас - <a href='https://clck.ru/3TP3'>здесь</a>\n\n"
+            "2️⃣ Запустите приложение, скопируйте ключ доступа (нажмите 1 раз по ключу)"
+            " или нажмите на кнопку ниже \"Подключить\":\n\n"
+            "{vpn_key}\n\n"
+            "3️⃣ В приложении <b>HAPP</b> нажмите \"+\" и выберите"
+            " \"<b>Вставить из буфера обмена</b>\"\n\n"
+            "4️⃣ Выберите нужную локацию и включите VPN\n\n"
+        ),
+        android_setup_kb,
+    ),
+    "os_ios": (
+        (
+            "🍏 Настройка <b>Rumbush VPN</b> на iOS через HAPP\n\n"
+            "1️⃣ Откройте <a href='https://apps.apple.com/'>App Store</a>"
+            " и скачайте приложение <b>HAPP</b>\n\n"
+            "2️⃣ Запустите приложение, скопируйте ваш ключ доступа"
+            " (нажмите 1 раз по ключу) или используйте кнопку \"Подключить\" ниже:\n\n"
+            "{vpn_key}\n\n"
+            "3️⃣ В приложении <b>HAPP</b> нажмите \"+\" →"
+            " выберите \"<b>Импорт из буфера обмена</b>\"\n\n"
+            "4️⃣ Выберите нужную локацию и включите VPN"
+        ),
+        ios_setup_kb,
+    ),
+    "os_win10": (
+        (
+            "🖥 Настройка <b>Rumbush VPN</b> на Windows через HAPP:\n\n"
+            "1️⃣ Скачайте и установите приложение"
+            " <a href='https://clck.ru/3TP7C5'>HAPP</a>\n\n"
+            "2️⃣ Запустите его <b>от имени администратора</b>"
+            " и скопируйте ключ доступа (нажмите 1 раз по ключу):\n\n"
+            "{vpn_key}\n\n"
+            "3️⃣ При первом запуске появится окно с вводом ключа,"
+            " вставьте туда скопированный ключ и нажмите \"<b>Поехали</b>\"\n\n"
+            "4️⃣ После добавления ключа появится список локаций."
+            " Выберите нужную локацию и нажмите на неё\n\n"
+            "5️⃣ Если Вам необходим <b>VPN для Discord, Игр и т.п</b>,"
+            " то внизу нажмите \"<b>TUN</b>\","
+            " а если только для браузера \"<b>Proxy</b>\"\n\n"
+            "6️⃣ Нажмите на большую кнопку включения"
+            " и дождитесь подключения к серверам.\n\n"
+        ),
+        win10_setup_kb,
+    ),
+    "os_macos": (
+        (
+            "🖥 Настройка <b>Rumbush VPN</b> на MacOS через HAPP:\n"
+            "<i>HAPP работает только на Mac с процессорами Apple (M1/M2/M3)</i>\n\n"
+            "1️⃣ Скачайте <a href='https://clck.ru/3TP7i2'>HAPP</a> и установите\n\n"
+            "2️⃣ Запустите приложение и скопируйте ключ доступа"
+            " (нажмите 1 раз по ключу):\n\n"
+            "{vpn_key}\n\n"
+            "3️⃣ В приложении нажмите на значок \"+\" в правом нижнем углу,"
+            " чтобы добавить новое подключение,"
+            " и выберите \"<b>Добавить из буфера обмена</b>\"\n\n"
+            "4️⃣ Выберите нужную локацию и включите подключение\n\n"
+        ),
+        macos_setup_kb,
+    ),
+    "os_win7": (
+        (
+            "🖥 Настройка <b>Rumbush VPN</b> на Windows 7 через HAPP:\n\n"
+            "1️⃣ Скачайте и установите приложение"
+            " <a href='https://clck.ru/3TPmJV'>HAPP</a>\n\n"
+            "2️⃣ Запустите его <b>от имени администратора</b>"
+            " и скопируйте ключ доступа (нажмите 1 раз по ключу):\n\n"
+            "{vpn_key}\n\n"
+            "3️⃣ При первом запуске появится окно с вводом ключа,"
+            " вставьте туда скопированный ключ и нажмите \"<b>Поехали</b>\"\n\n"
+            "4️⃣ После добавления ключа появится список локаций."
+            " Выберите нужную локацию и нажмите на неё\n\n"
+            "5️⃣ Если Вам необходим <b>VPN для Discord, Игр и т.п</b>,"
+            " то внизу нажмите \"<b>TUN</b>\","
+            " а если только для браузера \"<b>Proxy</b>\"\n\n"
+            "6️⃣ Нажмите на большую кнопку включения"
+            " и дождитесь подключения к серверам.\n\n"
+        ),
+        win7_setup_kb,
+    ),
+    "os_linux": (
+        (
+            "🐧 Настройка <b>Rumbush VPN</b> на Linux через HAPP:\n\n"
+            "1️⃣ Скачайте и установите приложение"
+            " <a href='https://clck.ru/3TPmVj'>HAPP</a>\n\n"
+            "2️⃣ Запустите его <b>от имени администратора</b>"
+            " и скопируйте ключ доступа (нажмите 1 раз по ключу):\n\n"
+            "{vpn_key}\n\n"
+            "3️⃣ При первом запуске появится окно с вводом ключа,"
+            " вставьте туда скопированный ключ и нажмите \"<b>Поехали</b>\"\n\n"
+            "4️⃣ После добавления ключа появится список локаций."
+            " Выберите нужную локацию и нажмите на неё\n\n"
+            "5️⃣ Если Вам необходим <b>VPN для Discord, Игр и т.п</b>,"
+            " то внизу нажмите \"<b>TUN</b>\","
+            " а если только для браузера \"<b>Proxy</b>\"\n\n"
+            "6️⃣ Нажмите на большую кнопку включения"
+            " и дождитесь подключения к серверам.\n\n"
+        ),
+        linux_setup_kb,
+    ),
+    "os_huawei": (
+        (
+            "📱 Настройка <b>Rumbush VPN</b> на HUAWEI через HAPP:\n\n"
+            "1️⃣ Скачайте APK у нас -"
+            " <a href='https://clck.ru/3TPmod'>HAPP</a>\n\n"
+            "2️⃣ Запустите приложение, скопируйте ключ доступа"
+            " (нажмите 1 раз по ключу) или нажмите на кнопку ниже \"Подключить\":\n\n"
+            "{vpn_key}\n\n"
+            "3️⃣ В приложении <b>HAPP</b> нажмите \"+\""
+            " и выберите \"<b>Вставить из буфера обмена</b>\"\n\n"
+            "4️⃣ Выберите нужную локацию и включите VPN\n\n"
+        ),
+        huawei_setup_kb,
+    ),
+    "os_android_tv": (
+        (
+            "📺 Настройка <b>Rumbush VPN</b> на Android TV через HAPP:\n\n"
+            "1️⃣ Откройте <a href='https://play.google.com/store'>Google Play Маркет</a>"
+            " и введите в поиске HAPP или скачайте APK"
+            " <a href='https://clck.ru/3TPmod'>здесь</a>\n\n"
+            "2️⃣ Для продолжения потребуется устройство с камерой,"
+            " на котором уже установлено приложение <b>HAPP</b>"
+            " с добавленной подпиской\n\n"
+            "3️⃣ Откройте приложение <b>HAPP</b> на устройстве с камерой,"
+            " нажмите \"+\" и выберите \"<b>QR-код</b>\"\n\n"
+            "4️⃣ Отсканируйте <b>QR-код</b>, который отображается на телевизоре,"
+            " затем выберите подписку и нажмите \"<b>Отправить</b>\"\n\n"
+            "5️⃣ Если окно не закрылось автоматически после нажатия \"<b>Отправить</b>\","
+            " нажмите кнопку \"<b>пропустить</b>\""
+            " — должен быть открыться основной интерфейс\n\n"
+            "6️⃣ Выберите нужную локацию и нажмите кнопку"
+            " \"<b>подключение</b>\" и выдайте все необходимые разрешения\n\n"
+        ),
+        android_tv_setup_kb,
+    ),
+    "os_apple_tv": (
+        (
+            "apple tv Настройка <b>Rumbush VPN</b> на Apple TV через HAPP:\n\n"
+            "1️⃣ Откройте <a href='https://apps.apple.com/'>AppStore</a>"
+            " и введите в поиске <b>Happ - Proxy Utility for TV</b>\n\n"
+            "2️⃣ Для продолжения потребуется устройство с камерой,"
+            " на котором уже установлено приложение <b>HAPP</b>"
+            " с добавленной подпиской\n\n"
+            "3️⃣ Откройте приложение <b>HAPP</b> на устройстве с камерой,"
+            " нажмите \"+\" и выберите \"<b>QR-код</b>\"\n\n"
+            "4️⃣ Отсканируйте <b>QR-код</b>, который отображается на телевизоре,"
+            " затем выберите подписку и нажмите \"<b>Отправить</b>\"\n\n"
+            "5️⃣ Если окно не закрылось автоматически после нажатия \"<b>Отправить</b>\","
+            " нажмите кнопку \"<b>пропустить</b>\""
+            " — должен быть открыться основной интерфейс\n\n"
+            "6️⃣ Выберите нужную локацию и нажмите кнопку"
+            " \"<b>подключение</b>\" и выдайте все необходимые разрешения\n\n"
+        ),
+        apple_tv_setup_kb,
+    ),
+}
+
+
+# Одна функция вместо девяти.
+# F.data.in_({...}) — срабатывает на любой из перечисленных callback_data
+@router.callback_query(F.data.in_(INSTRUCTION_DATA.keys()))
+async def show_instruction(callback: types.CallbackQuery):
     await callback.answer()
-    
-    # Временный ключ для примера (позже научим бота брать его из базы данных для каждого юзера свой)
-    vpn_key = DEMO_VPN_KEY
-    
-    text = (
-        "🤖 Настройка <b>Rumbush VPN</b> на Android через HAPP:\n\n"
-        "1️⃣ Откройте <a href='https://play.google.com/store'>Google Play Маркет</a> или скачайте APK у нас - <a href='https://clck.ru/3TP3Xe'>HAPP</a>\n\n"
-        "2️⃣ Запустите приложение, скопируйте ключ доступа (нажмите 1 раз по ключу) или нажмите на кнопку ниже \"Подключить\":\n\n"
-        f"<code>{vpn_key}</code>\n\n"
-        "3️⃣ В приложении <b>HAPP</b> нажмите \"+\" и выберите \"<b>Вставить из буфера обмена</b>\"\n\n"
-        "4️⃣ Выберите нужную локацию и включите VPN\n\n"
-    )
-    
-    await safe_edit(callback,
-        text=text,
-        reply_markup=android_setup_kb,
-        parse_mode="HTML",
-        link_preview_options=types.LinkPreviewOptions(is_disabled=True) 
-    )
-    # Обработка выбора устройства "iOS"
-@router.callback_query(F.data == "os_ios")
-async def instruction_ios(callback: types.CallbackQuery):
-    await callback.answer() # Снимаем "часики" загрузки
-    
-    # Временный ключ (как и в Android)
-    vpn_key = DEMO_VPN_KEY
-    
-    text = (
-        "🍏 Настройка <b>Rumbush VPN</b> на iOS через HAPP\n\n"
-        "1️⃣ Откройте <a href='https://apps.apple.com/'>App Store</a> и скачайте приложение <b>HAPP</b>\n\n"
-        "2️⃣ Запустите приложение, скопируйте ваш ключ доступа (нажмите 1 раз по ключу) или используйте кнопку \"Подключить\" ниже:\n\n"
-        f"<code>{vpn_key}</code>\n\n"
-        "3️⃣ В приложении <b>HAPP</b> нажмите \"+\" → выберите \"<b>Импорт из буфера обмена</b>\"\n\n"
-        "4️⃣ Выберите нужную локацию и включите VPN"
-    )
-    
-    await safe_edit(callback,
-        text=text,
-        reply_markup=ios_setup_kb,
-        parse_mode="HTML",
-        link_preview_options=types.LinkPreviewOptions(is_disabled=True) 
-    )
-    # Обработка выбора устройства "Windows 10+"
-@router.callback_query(F.data == "os_win10")
-async def instruction_win10(callback: types.CallbackQuery):
-    await callback.answer() # Снимаем "часики" загрузки
-    
-    
-    vpn_key = DEMO_VPN_KEY
-    
-    text = (
-        "💻 Настройка <b>Rumbush VPN</b> на Windows через HAPP:\n\n"
-        "1️⃣ Скачайте и установите приложение <a href='https://clck.ru/3TP7C5'>HAPP</a>\n\n"
-        "2️⃣ Запустите его <b>от имени администратора</b> и скопируйте ключ доступа (нажмите 1 раз по ключу):\n\n"
-        f"<code>{vpn_key}</code>\n\n"
-        "3️⃣ При первом запуске появится окно с вводом ключа, вставьте туда скопированный ключ и нажмите \"<b>Поехали</b>\"\n\n"
-        "4️⃣ После добавления ключа появится список локаций и основные кнопки. Выберите нужную локацию и нажмите на неё\n\n"
-        "5️⃣ Если Вам необходим <b>VPN для Discord, Игр и т.п</b>, то внизу нажмите \"<b>TUN</b>\", а если только для браузера \"<b>Proxy</b>\"\n\n"
-        "6️⃣ Нажмите на большую кнопку включения и дождитесь подключения к серверам.\n\n"
-        "<i>Если у вас старая версия Windows или возникают проблемы с работой программы, скачайте и установите <a href='https://aka.ms/vs/17/release/vc_redist.x86.exe'>Microsoft Visual C++ Redistributable</a> и <a href='https://dotnet.microsoft.com/'>Microsoft .NET 6.0 Desktop Runtime</a></i>\n\n"
-    )
-    
-    await safe_edit(callback,
-        text=text,
-        reply_markup=win10_setup_kb,
-        parse_mode="HTML",
-        link_preview_options=types.LinkPreviewOptions(is_disabled=True) 
-    )
-    # Обработка выбора устройства "MacOS"
-@router.callback_query(F.data == "os_macos")
-async def instruction_macos(callback: types.CallbackQuery):
-    await callback.answer() # Снимаем "часики" загрузки
-    
-    vpn_key = DEMO_VPN_KEY
 
-    
-    text = (
-        "💻 Настройка <b>Rumbush VPN</b> на MacOS через HAPP:\n"
-        "<i>HAPP работает только на Mac с процессорами Apple (M1/M2/M3)</i>\n\n"
-        "1️⃣ Скачайте <a href='https://clck.ru/3TP7i2'>HAPP</a> и установите\n\n"
-        "2️⃣ Запустите приложение и скопируйте ключ доступа (нажмите 1 раз по ключу):\n\n"
-        f"<code>{vpn_key}</code>\n\n"
-        "3️⃣ В приложении нажмите на значок \"+\" в правом нижнем углу, чтобы добавить новое подключение, и выберите \"<b>Добавить из буфера</b>\"\n\n"
-        "4️⃣ Выберите нужную локацию и включите подключение\n\n"
-    )
-    
-    await safe_edit(callback,
-        text=text,
-        reply_markup=macos_setup_kb,
-        parse_mode="HTML",
-        link_preview_options=types.LinkPreviewOptions(is_disabled=True) 
-    )
-    # Обработка выбора устройства "Windows 7"
-@router.callback_query(F.data == "os_win7")
-async def instruction_win7(callback: types.CallbackQuery):
-    await callback.answer() # Снимаем "часики"
-    
-    vpn_key = DEMO_VPN_KEY
+    # Берём из словаря текст и клавиатуру для нужного устройства
+    text_template, keyboard = INSTRUCTION_DATA[callback.data]
 
-    
-    text = (
-        "💻 Настройка <b>Rumbush VPN</b> на Windows 7 через HAPP:\n\n"
-        "1️⃣ Скачайте и установите приложение <a href='https://clck.ru/3TPmJV'>HAPP</a>\n\n"
-        "2️⃣ Запустите его <b>от имени администратора</b> и скопируйте ключ доступа (нажмите 1 раз по ключу):\n\n"
-        f"<code>{vpn_key}</code>\n\n"
-        "3️⃣ При первом запуске появится окно с вводом ключа, вставьте туда скопированный ключ и нажмите \"<b>Поехали</b>\"\n\n"
-        "4️⃣ После добавления ключа появится список локаций и основные кнопки. Выберите нужную локацию и нажмите на неё\n\n"
-        "5️⃣ Если Вам необходим <b>VPN для Discord, Игр и т.п</b>, то внизу нажмите \"<b>TUN</b>\", а если только для браузера \"<b>Proxy</b>\"\n\n"
-        "6️⃣ Нажмите на большую кнопку включения и дождитесь подключения к серверам.\n\n"
-        "<i>Если у вас старая версия Windows или возникают проблемы с работой программы, скачайте и установите <a href='https://aka.ms/vs/17/release/vc_redist.x86.exe'>Microsoft Visual C++ Redistributable</a> и <a href='https://dotnet.microsoft.com/'>Microsoft .NET 6.0 Desktop Runtime</a></i>\n\n"
-    )
-    
-    await safe_edit(callback,
-        text=text,
-        reply_markup=win7_setup_kb,
-        parse_mode="HTML",
-        link_preview_options=types.LinkPreviewOptions(is_disabled=True) 
-    )
-    # Обработка выбора устройства "Linux"
-@router.callback_query(F.data == "os_linux")
-async def instruction_linux(callback: types.CallbackQuery):
-    await callback.answer() # Снимаем "часики" загрузки
-    
-    vpn_key = DEMO_VPN_KEY
+    # Подставляем VPN-ключ в текст (там где написано {vpn_key})
+    # .format() заменяет {vpn_key} на реальное значение
+    text = text_template.format(vpn_key=f"<code>{DEMO_VPN_KEY}</code>")
 
-    
-    text = (
-        "🐧 Настройка <b>Rumbush VPN</b> на Linux через HAPP:\n\n"
-        "1️⃣ Скачайте и установите приложение <a href='https://clck.ru/3TPmVj'>HAPP</a>\n\n"
-        "2️⃣ Запустите его <b>от имени администратора</b> и скопируйте ключ доступа (нажмите 1 раз по ключу):\n\n"
-        f"<code>{vpn_key}</code>\n\n"
-        "3️⃣ При первом запуске появится окно с вводом ключа, вставьте туда скопированный ключ и нажмите \"<b>Поехали</b>\"\n\n"
-        "4️⃣ После добавления ключа появится список локаций и основные кнопки. Выберите нужную локацию и нажмите на неё\n\n"
-        "5️⃣ Если Вам необходим <b>VPN для Discord, Игр и т.п</b>, то внизу нажмите \"<b>TUN</b>\", а если только для браузера \"<b>Proxy</b>\"\n\n"
-        "6️⃣ Нажмите на большую кнопку включения и дождитесь подключения к серверам.\n\n"
-    )
-    
-    await safe_edit(callback,
+    await safe_edit(
+        callback,
         text=text,
-        reply_markup=linux_setup_kb,
+        reply_markup=keyboard,
         parse_mode="HTML",
-        link_preview_options=types.LinkPreviewOptions(is_disabled=True) 
-    )
-    # Обработка выбора устройства "Huawei"
-@router.callback_query(F.data == "os_huawei")
-async def instruction_huawei(callback: types.CallbackQuery):
-    await callback.answer() # Снимаем "часики"
-    
-    vpn_key = DEMO_VPN_KEY
-
-    
-    text = (
-        "📱 Настройка <b>Rumbush VPN</b> на HUAWEI через HAPP:\n\n"
-        "1️⃣ Скачайте APK у нас - <a href='https://clck.ru/3TPmod'>HAPP</a>\n\n"
-        "2️⃣ Запустите приложение, скопируйте ключ доступа (нажмите 1 раз по ключу) или нажмите на кнопку ниже \"Подключить\":\n\n"
-        f"<code>{vpn_key}</code>\n\n"
-        "3️⃣ В приложении <b>HAPP</b> нажмите \"+\" и выберите \"<b>Вставить из буфера обмена</b>\"\n\n"
-        "4️⃣ Выберите нужную локацию и включите VPN\n\n"
-    )
-    
-    await safe_edit(callback,
-        text=text,
-        reply_markup=huawei_setup_kb,
-        parse_mode="HTML",
-        link_preview_options=types.LinkPreviewOptions(is_disabled=True) 
-    )
-    # Обработка выбора устройства "Android TV"
-@router.callback_query(F.data == "os_android_tv")
-async def instruction_android_tv(callback: types.CallbackQuery):
-    await callback.answer() # Снимаем "часики"
-    
-    text = (
-        "🤖 Настройка <b>Rumbush VPN</b> на Android TV через HAPP:\n\n"
-        "1️⃣ Откройте <a href='https://play.google.com/store'>Google Play Маркет</a> и введите в поиске HAPP или скачайте APK <a href='https://clck.ru/3TPmod'>HAPP</a> на флешку\n\n"
-        "2️⃣ Для продолжения потребуется устройство с камерой, на котором уже установлено приложение <b>HAPP</b> с добавленной подпиской\n\n"
-        "3️⃣ Откройте приложение <b>HAPP</b> на устройстве с камерой, нажмите \"+\" и выберите \"<b>QR-код</b>\"\n\n"
-        "4️⃣ Отсканируйте <b>QR-код</b>, который отображается на телевизоре, затем выберите подписку и нажмите \"<b>Отправить</b>\"\n\n"
-        "5️⃣ Если окно не закрылось автоматически после нажатия \"<b>Отправить</b>\", нажмите кнопку \"<b>пропустить</b>\" — должен будет открыться основной интерфейс\n\n"
-        "6️⃣ Выберите нужную локацию и нажмите кнопку \"<b>подключение</b>\" и выдайте все необходимые разрешения\n\n"
-    )
-    
-    await safe_edit(callback,
-        text=text,
-        reply_markup=android_tv_setup_kb,
-        parse_mode="HTML",
-        link_preview_options=types.LinkPreviewOptions(is_disabled=True) 
-    )
-    # Обработка выбора устройства "Apple TV"
-@router.callback_query(F.data == "os_apple_tv")
-async def instruction_apple_tv(callback: types.CallbackQuery):
-    await callback.answer() # Снимаем "часики"
-    
-    text = (
-        "apple tv Настройка <b>Rumbush VPN</b> на Apple TV через HAPP:\n\n"
-        "1️⃣ Откройте <a href='https://apps.apple.com/'>AppStore</a> и введите в поиске <b>Happ - Proxy Utility for TV</b>\n\n"
-        "2️⃣ Для продолжения потребуется устройство с камерой, на котором уже установлено приложение <b>HAPP</b> с добавленной подпиской\n\n"
-        "3️⃣ Откройте приложение <b>HAPP</b> на устройстве с камерой, нажмите \"+\" и выберите \"<b>QR-код</b>\"\n\n"
-        "4️⃣ Отсканируйте <b>QR-код</b>, который отображается на телевизоре, затем выберите подписку и нажмите \"<b>Отправить</b>\"\n\n"
-        "5️⃣ Если окно не закрылось автоматически после нажатия \"<b>Отправить</b>\", нажмите кнопку \"<b>пропустить</b>\" — должен будет открыться основной интерфейс\n\n"
-        "6️⃣ Выберите нужную локацию и нажмите кнопку \"<b>подключение</b>\" и выдайте все необходимые разрешения\n\n"
-    )
-    await safe_edit(callback,
-        text=text,
-        reply_markup=apple_tv_setup_kb,
-        parse_mode="HTML",
-        link_preview_options=types.LinkPreviewOptions(is_disabled=True) 
+        link_preview_options=types.LinkPreviewOptions(is_disabled=True),
     )
