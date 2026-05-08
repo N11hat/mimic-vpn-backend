@@ -7,6 +7,7 @@ from database.requests import (
     create_promocode,
     get_all_promocodes,
     deactivate_promocode,
+    get_stats,
 )
 
 
@@ -114,3 +115,25 @@ async def cmd_disable_promo(message: types.Message):
         await message.answer(f"✅ Промокод <code>{code.upper()}</code> деактивирован.", parse_mode="HTML")
     else:
         await message.answer(f"❌ Промокод <code>{code.upper()}</code> не найден.", parse_mode="HTML")
+
+
+
+@router.message(Command("stats"))
+async def cmd_stats(message: types.Message):
+    """Показывает статистику бота. Только для админов."""
+    stats = await get_stats()
+
+    text = (
+        "📊 <b>Статистика Rumbush VPN</b>\n\n"
+        "👥 <b>Пользователи:</b>\n"
+        f"• Всего: <b>{stats['total_users']}</b>\n"
+        f"• Новых сегодня: <b>{stats['new_today']}</b>\n"
+        f"• Новых за 7 дней: <b>{stats['new_week']}</b>\n\n"
+        "💰 <b>Финансы:</b>\n"
+        f"• Сумма на балансах: <b>{stats['total_balance']}₽</b>\n\n"
+        "🎟 <b>Промокоды:</b>\n"
+        f"• Активных: <b>{stats['active_promos']}</b>\n"
+        f"• Всего активаций: <b>{stats['total_promo_uses']}</b>"
+    )
+
+    await message.answer(text, parse_mode="HTML")

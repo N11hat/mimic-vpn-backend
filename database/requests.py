@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import select, update
 
 from database.engine import async_session
@@ -188,3 +188,56 @@ async def deactivate_promocode(code: str) -> bool:
         promo.is_active = False
         await session.commit()
         return True
+
+
+async def get_stats() -> dict:
+    """Собирает статистику для команды /stats."""
+    from sqlalchemy import func
+    from datetime import timezone
+
+    now = datetime.utcnow()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start = now - timedelta(days=7)
+
+    async with async_session() as session:
+        # Всего пользователей
+        total_users = await session.scalar(
+            select(func.count()).select_from(User)
+        )
+
+        # Новых сегодня
+        new_today = await session.scalar(
+            select(func.count()).select_from(User)
+            .where(User.created_at >= today_start)
+        )
+
+        # Новых за 7 дней
+        new_week = await session.scalar(
+            select(func.count()).select_from(User)
+            .where(User.created_at >= week_start)
+        )
+
+        # Сумма всех балансов
+        total_balance = await session.scalar(
+            select(func.sum(User.balance))
+        ) or 0
+
+        # Активных промокодов
+        active_promos = await session.scalar(
+            select(func.count()).select_from(Promocode)
+            .where(Promocode.is_active == True)
+        )
+
+        # Всего активаций промокодов
+        total_promo_uses = await session.scalar(
+            select(func.sum(Promocode.used_count))
+        ) or 0
+
+    return {
+        "total_users": total_users,
+        "new_today": new_today,
+        "new_week": new_week,
+        "total_balance": total_balance,
+        "active_promos": active_promos,
+        "total_promo_uses": total_promo_uses,
+    }
