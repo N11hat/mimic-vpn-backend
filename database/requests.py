@@ -241,3 +241,9 @@ async def get_stats() -> dict:
         "active_promos": active_promos,
         "total_promo_uses": total_promo_uses,
     }
+
+async def get_all_user_ids() -> list[int]:
+    """Возвращает tg_id всех пользователей бота. Нужно для рассылок."""
+    async with async_session() as session:
+        result = await session.execute(select(User.tg_id))
+        return list(result.scalars().all())

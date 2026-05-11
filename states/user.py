@@ -9,3 +9,7 @@ class PromoState(StatesGroup):
 class TopUpState(StatesGroup):
     # Бот ждёт, пока пользователь введёт сумму пополнения текстом
     waiting_for_amount = State()
+
+class BroadcastState(StatesGroup):
+    waiting_for_text = State()
+    waiting_for_confirm = State()
