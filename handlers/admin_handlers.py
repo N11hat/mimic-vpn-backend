@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from states.user import BroadcastState
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from filters.admin import IsAdmin
 from database.engine import async_session
@@ -21,6 +21,9 @@ from database.requests import (
     get_all_user_ids,
 )
 from sqlalchemy import select
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 router = Router()
 # Все хендлеры этого роутера работают только для админов
@@ -63,7 +66,7 @@ async def cmd_add_promo(message: types.Message):
         await message.answer("❌ Скидка должна быть от 1 до 100%.")
         return
 
-    expires_at = datetime.utcnow() + timedelta(days=days) if days > 0 else None
+    expires_at = datetime.now(timezone.utc) + timedelta(days=days) if days > 0 else None
 
     promo = await create_promocode(
         code=code,
@@ -302,11 +305,11 @@ async def cmd_give(message: types.Message):
         await message.bot.send_message(tg_id, user_text, parse_mode="HTML")
     except Exception as e:
         # Юзер мог заблокировать бота — это не ошибка, просто сообщаем админу
+        logger.warning("Не удалось уведомить tg_id=%s о начислении: %s", tg_id, e)
         await message.answer(
             f"⚠️ Не удалось уведомить пользователя в личку: <code>{e}</code>",
             parse_mode="HTML",
         )
-
 
 # ============================================================
 # /broadcast — массовая рассылка всем пользователям
@@ -424,13 +427,16 @@ async def broadcast_confirm_callback(callback: types.CallbackQuery, state: FSMCo
             blocked += 1
         except TelegramRetryAfter as e:
             # Telegram попросил подождать — ждём и повторяем для этого юзера
+            logger.warning("Telegram rate limit: ждём %s сек.", e.retry_after)
             await asyncio.sleep(e.retry_after)
             try:
                 await bot.send_message(tg_id, text, parse_mode="HTML")
                 sent += 1
             except Exception:
+                logger.exception("Не удалось отправить рассылку tg_id=%s после retry", tg_id)
                 failed += 1
         except Exception:
+            logger.exception("Не удалось отправить рассылку tg_id=%s", tg_id)
             failed += 1
 
         # Пауза, чтобы не превысить лимит Telegram (~30 msg/sec).
@@ -444,8 +450,8 @@ async def broadcast_confirm_callback(callback: types.CallbackQuery, state: FSMCo
                     f"📊 Отправлено: {i} / {total}",
                     parse_mode="HTML",
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Не удалось обновить статус рассылки: %s", e)
 
     # Итоговый отчёт
     await status_msg.edit_text(

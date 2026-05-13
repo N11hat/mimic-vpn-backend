@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import AsyncAttrs
@@ -33,8 +33,7 @@ class User(Base):
     discount: Mapped[int] = mapped_column(Integer, default=0)  # процент скидки
 
     # Метаданные
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 class Promocode(Base):
     __tablename__ = 'promocodes'
@@ -54,7 +53,7 @@ class Promocode(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     # Метаданные
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     created_by: Mapped[int] = mapped_column(BigInteger, nullable=True)  # tg_id админа
 
 
@@ -65,8 +64,7 @@ class UserPromocode(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_tg_id: Mapped[int] = mapped_column(BigInteger)
     promocode_id: Mapped[int] = mapped_column(ForeignKey('promocodes.id'))
-    used_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 

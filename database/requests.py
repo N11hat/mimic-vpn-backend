@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, update
 
 from database.engine import async_session
@@ -82,7 +82,7 @@ async def apply_promocode(tg_id: int, code: str) -> int | None:
             return None
 
         # Проверка срока действия
-        if promo.expires_at and promo.expires_at < datetime.utcnow():
+        if promo.expires_at and promo.expires_at < datetime.now(timezone.utc):
             return None
 
         # Проверка лимита
@@ -193,9 +193,8 @@ async def deactivate_promocode(code: str) -> bool:
 async def get_stats() -> dict:
     """Собирает статистику для команды /stats."""
     from sqlalchemy import func
-    from datetime import timezone
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     week_start = now - timedelta(days=7)
 
